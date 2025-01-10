@@ -1,0 +1,67 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Drop Dash Dust Object
+// Script Author: Christian Whitehead/Simon Thomley
+// Unpacked by Rubberduckycooly's script unpacker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.timer
+
+
+event ObjectUpdate
+	object.timer++
+	if object.timer > 2
+		object.timer = 0
+		
+		object.frame++
+		if object.frame > 15
+			object.type = TypeName[Blank Object]
+			object.frame = 0
+		end if
+	end if
+end event
+
+
+event ObjectDraw
+	DrawSpriteFX(object.frame, FX_FLIP, object.xpos, object.ypos)
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Global/DDDust.gif")
+
+	// Drop Dash dust frames
+	SpriteFrame(-28, -14, 18, 9, 1, 1)  // Frame 0
+	SpriteFrame(-28, -19, 21, 14, 20, 1) // Frame 1
+	SpriteFrame(-30, -21, 20, 16, 42, 1) // Frame 2
+	SpriteFrame(-30, -22, 20, 17, 63, 1) // Frame 3
+	SpriteFrame(-31, -24, 21, 19, 85, 1) // Frame 4
+	SpriteFrame(-30, -24, 21, 19, 107, 1) // Frame 5
+	SpriteFrame(-29, -25, 22, 20, 129, 1) // Frame 6
+	SpriteFrame(-29, -25, 24, 20, 152, 1) // Frame 7
+	SpriteFrame(-29, -26, 24, 21, 177, 1) // Frame 8
+	SpriteFrame(-29, -26, 24, 21, 202, 1) // Frame 9
+	SpriteFrame(-29, -28, 24, 24, 227, 1) // Frame 10
+	SpriteFrame(-29, -28, 24, 24, 1, 25) // Frame 11
+	SpriteFrame(-29, -27, 25, 21, 26, 25) // Frame 12
+	SpriteFrame(-29, -26, 24, 19, 52, 25) // Frame 13
+	SpriteFrame(-28, -25, 22, 18, 77, 25) // Frame 14
+	SpriteFrame(-30, -25, 25, 17, 100, 25) // Frame 15
+end event
+
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items2.gif")
+	SpriteFrame(-16, -16, 32, 32, 1, 84)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event

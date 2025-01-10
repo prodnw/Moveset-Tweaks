@@ -1,0 +1,92 @@
+// ----------------------------------
+// RSDK Project: Sonic CD
+// Script Description: Insta Shield Object
+// Script Author: Christian Whitehead/Simon Thomley
+// Unpacked by Rubberduckycooly's script unpacker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+#alias Player.Value4		:	Player.InvincibleTimer
+
+#alias Object.Value0		:	Object.hitboxTop
+#alias Object.Value1		:	Object.hitboxBottom
+#alias Player.Value2		:	Object.hitboxLeft
+#alias Object.Value3		:	Object.hitboxRight
+
+
+// ========================
+// subs
+// ========================
+
+sub ObjectUpdate
+	// Dead players shouldn't have insta-shields
+	if player[-playerCount].state == Player_State_Death
+		object.type = TypeName[Blank Object]
+	end if
+
+	if player[-playerCount].state == Player_State_Drown
+		object.type = TypeName[Blank Object]
+	end if
+
+	// Draw right below the player
+	object.drawOrder = 6
+
+	object.frame++
+	if object.frame >= 7
+		object.frame = 0
+		object.type = TypeName[Blank Object]
+	else
+		player[-playerCount].invincibleTimer = 1
+	end if
+
+	PlayerObjectCollision(C_BOX, Player.hitboxLeft, Player,hitboxTop, Player.hitboxRight, Player.hitboxBottom)
+	if object.type == TypeName[Insta Shield]
+		player[-playerCount].hitboxTop = -24
+		player[-playerCount].hitboxBottom = 24
+		player[-playerCount].hitboxLeft = -24
+		player[-playerCount].hitboxRight = 24
+	else
+		player[-playerCount].hitboxTop = C_BOX
+		player[-playerCount].hitboxBottom = C_BOX
+		player[-playerCount].hitboxLeft = C_BOX
+		player[-playerCount].hitboxRight = C_BOX
+	end if
+end sub
+
+
+sub ObjectDraw
+	DrawSpriteXY(object.frame, object[-playerCount].xpos, object[-playerCount].ypos)
+end sub
+
+
+sub ObjectStartup
+	LoadSpriteSheet("Global/InstaShield.gif")
+	
+	SpriteFrame(0, 0, 1, 1, 1, 1)
+	SpriteFrame(-12, -19, 19, 19, 148, 155)
+	SpriteFrame(0, -16, 18, 21, 94, 231)
+	SpriteFrame(-3, 2, 27, 24, 113, 228)
+	SpriteFrame(-24, -16, 31, 38, 141, 214)
+	SpriteFrame(-16, -24, 40, 40, 173, 214)
+	SpriteFrame(-24, -16, 41, 40, 214, 214)
+end sub
+
+
+// ========================
+// Editor subs
+// ========================
+
+sub RSDKDraw
+	DrawSprite(0)
+end sub
+
+
+sub RSDKLoad
+	LoadSpriteSheet("Global/Items3.gif")
+	SpriteFrame(-16, -24, 40, 40, 173, 214)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end sub

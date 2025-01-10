@@ -1,0 +1,551 @@
+// ----------------------------------
+// RSDK Project: Sonic 1
+// Script Description: Options Menu Object
+// Script Author: Christian Whitehead/Simon Thomley
+// Unpacked by Rubberduckycooly's script unpacker
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+// SaveRAM stuff
+public alias saveRAM[300] : options.dropDash
+public alias saveRAM[301] : options.peelout
+public alias saveRAM[302] : options.instaShield
+public alias saveRAM[303] : options.flightCancel
+public alias saveRAM[304] : options.amyDoubleJump
+
+private alias object.value0 : object.timer
+private alias object.value1 : object.optionsSel
+private alias object.value2 : object.generalSel
+private alias object.value3 : object.sonicOptionsSel
+private alias object.value4 : object.tailsOptionsSel
+private alias object.value5 : object.amyOptionsSel
+
+// States
+private alias 0 : MENUCONTROL_INIT
+private alias 1 : MENUCONTROL_FADEIN
+private alias 2 : MENUCONTROL_SELECTINGOPTION
+private alias 3 : MENUCONTROL_GENERALOPTIONS
+private alias 4 : MENUCONTROL_SONICOPTIONS
+private alias 5 : MENUCONTROL_TAILSOPTIONS
+private alias 6 : MENUCONTROL_AMYOPTIONS
+private alias 7 : MENUCONTROL_BACKTOTITLE
+
+// Tracks
+private alias 1 : TRACK_MENU
+
+
+// ========================
+// Function Declarations
+// ========================
+
+
+// ========================
+// Static Values
+// ========================
+
+
+// ========================
+// Tables
+// ========================
+
+
+// ========================
+// Function Definitions
+// ========================
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	switch object.state
+	case MENUCONTROL_INIT
+		PlayMusic(TRACK_MENU)
+		object.timer = 320
+		SetScreenFade(0x00, 0x00, 0x00, object.timer)
+		SetActivePalette(0, 0, 256)
+		object.state++
+		break
+
+	case MENUCONTROL_FADEIN
+		if object.timer > 0
+			object.timer -= 16
+		else
+			object.state++
+		end if
+		SetScreenFade(0x00, 0x00, 0x00, object.timer)
+		break
+
+	case MENUCONTROL_SELECTINGOPTION
+		// Back to the title screen
+		if keyPress[0].buttonB == true
+			object.state = MENUCONTROL_BACKTOTITLE
+			PlaySfx(SfxName[Menu Back], false)
+		end if
+
+		// Something so the selection text doesn't stay highligted yellow
+		object.generalSel = 0
+		object.sonicOptionsSel = 0
+		object.tailsOptionsSel = 0
+		object.amyOptionsSel = 0		
+
+		// What sub-menu should be selected?
+		if keyPress[0].right == true
+			object.optionsSel++
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		if keyPress[0].left == true
+			object.optionsSel--
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		// Selection Loops
+		if object.optionsSel > 3
+			object.optionsSel = 0
+		end if
+
+		if object.optionsSel < 0
+			object.optionsSel = 3
+		end if
+
+		if keyPress[0].down == true
+			switch object.optionsSel
+			case 0
+				object.state = MENUCONTROL_GENERALOPTIONS
+				object.generalSel = 1
+				break
+			case 1
+				object.state = MENUCONTROL_SONICOPTIONS
+				object.sonicOptionsSel = 1
+				break
+			case 2
+				object.state = MENUCONTROL_TAILSOPTIONS
+				object.tailsOptionsSel = 1
+				break
+			case 3
+				object.state = MENUCONTROL_AMYOPTIONS
+				object.amyOptionsSel = 1
+				break
+			end switch		
+		end if
+		break
+
+	case MENUCONTROL_GENERALOPTIONS
+		if keyPress[0].buttonB == true
+			object.state = MENUCONTROL_SELECTINGOPTION
+			PlaySfx(SfxName[Menu Back], false)
+		end if
+
+		if keyPress[0].down == true
+			object.generalSel++
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		if keyPress[0].up == true
+			object.generalSel--
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		// Selection Loops
+		if object.generalSel > 2
+			object.generalSel = 1
+		end if
+
+		if object.generalSel < 1
+			object.generalSel = 2
+		end if
+
+		switch object.generalSel
+		case 1 // Spin Dash
+			if keyPress[0].left == true
+				options.spindash = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.spindash = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if		
+			break
+		case 2 // Peelout
+			if keyPress[0].left == true
+				options.peelout = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.peelout = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if		
+			break				
+		end switch
+		break
+
+	case MENUCONTROL_SONICOPTIONS
+		if keyPress[0].buttonB == true
+			object.state = MENUCONTROL_SELECTINGOPTION
+			PlaySfx(SfxName[Menu Back], false)
+		end if
+
+		if keyPress[0].down == true
+			object.sonicOptionsSel++
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		if keyPress[0].up == true
+			object.sonicOptionsSel--
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		// Selection Loops
+		if object.sonicOptionsSel > 2
+			object.sonicOptionsSel = 1
+		end if
+
+		if object.sonicOptionsSel < 1
+			object.sonicOptionsSel = 2
+		end if
+
+		switch object.sonicOptionsSel
+		case 1 // Drop Dash
+			if keyPress[0].left == true
+				options.dropDash = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.dropDash = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if		
+			break	
+		case 2 // Insta-Shield
+			if keyPress[0].left == true
+				options.instaShield = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.instaShield = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if		
+			break					
+		end switch
+		break
+
+	case MENUCONTROL_TAILSOPTIONS
+		if keyPress[0].buttonB == true
+			object.state = MENUCONTROL_SELECTINGOPTION
+			PlaySfx(SfxName[Menu Back], false)
+		end if
+
+		if keyPress[0].down == true
+			object.tailsOptionsSel++
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		if keyPress[0].up == true
+			object.tailsOptionsSel--
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		// Selection Loops
+		if object.tailsOptionsSel > 1
+			object.tailsOptionsSel = 1
+		end if
+
+		if object.tailsOptionsSel < 1
+			object.tailsOptionsSel = 1
+		end if
+
+		switch object.tailsOptionsSel
+		case 1 // Flight Cancel
+			if keyPress[0].left == true
+				options.flightCancel = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.flightCancel = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if		
+			break		
+		end switch
+		break
+
+	case MENUCONTROL_AMYOPTIONS
+		if keyPress[0].buttonB == true
+			object.state = MENUCONTROL_SELECTINGOPTION
+			PlaySfx(SfxName[Menu Back], false)
+		end if
+
+		if keyPress[0].down == true
+			object.amyOptionsSel++
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		if keyPress[0].up == true
+			object.amyOptionsSel--
+			PlaySfx(SfxName[Menu Move], false)
+		end if
+
+		// Selection Loops
+		if object.amyOptionsSel > 1
+			object.amyOptionsSel = 1
+		end if
+
+		if object.amyOptionsSel < 1
+			object.amyOptionsSel = 1
+		end if
+
+		switch object.amyOptionsSel
+		case 1 // Double Jump
+			if keyPress[0].left == true
+				options.amyDoubleJump = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.amyDoubleJump = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if		
+			break		
+		end switch
+		break		
+
+	case MENUCONTROL_BACKTOTITLE
+		if object.timer < 256
+			object.timer += 8
+			SetScreenFade(0, 0, 0, object.timer)
+		else
+			SetScreenFade(0x00, 0x00, 0x00, 0xFF)
+			StopMusic()
+			WriteSaveRAM()
+			stage.activeList 	  = PRESENTATION_STAGE
+			stage.listPos 		  = 0
+			LoadStage()
+		end if
+		break
+	end switch
+end event
+
+
+event ObjectDraw
+	DrawRect(0, 0, screen.xsize, screen.ysize, 18, 18, 79, 255)
+
+	temp0 += 1
+	temp0 %= 30
+	DrawSpriteScreenXY(0, temp0, screen.ycenter)
+
+	// Actual text
+	switch object.optionsSel
+	case 0
+		DrawSpriteScreenXY(1, screen.xcenter, screen.ycenter)
+		break
+	case 1
+		DrawSpriteScreenXY(2, screen.xcenter, screen.ycenter)
+		break
+	case 2
+		DrawSpriteScreenXY(3, screen.xcenter, screen.ycenter)
+		break
+	case 3
+		DrawSpriteScreenXY(4, screen.xcenter, screen.ycenter)
+		break
+	end switch
+
+	// Just the arrows lol
+	switch object.state
+	case MENUCONTROL_INIT
+	case MENUCONTROL_FADEIN
+	case MENUCONTROL_SELECTINGOPTION			 						
+		switch object.optionsSel
+		case 0
+		case 1
+		case 2
+		case 3
+			DrawSpriteScreenXY(5, 150, screen.ycenter)
+			DrawSpriteScreenXY(6, 275, screen.ycenter)
+			break				
+		end switch
+		break
+	end switch
+
+	CheckEqual(object.optionsSel, 0)
+	temp1 = checkResult
+	CheckEqual(object.state, MENUCONTROL_GENERALOPTIONS)
+	temp1 |= checkResult
+	if temp1 == true	
+		DrawSpriteScreenXY(7, screen.xcenter, 60)
+		DrawSpriteScreenXY(8, screen.xcenter, 60)
+		DrawSpriteScreenXY(7, screen.xcenter, 80)
+		DrawSpriteScreenXY(8, screen.xcenter, 80)		
+
+		if object.generalSel == 1
+			DrawSpriteScreenXY(12, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(11, screen.xcenter, 60)
+		end if
+
+		if options.spindash == true
+			DrawSpriteScreenXY(9, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 60)
+		end if
+
+		if object.generalSel == 2
+			DrawSpriteScreenXY(14, screen.xcenter, 80)
+		else
+			DrawSpriteScreenXY(13, screen.xcenter, 80)
+		end if
+
+		if options.peelout == true
+			DrawSpriteScreenXY(9, screen.xcenter, 80)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 80)
+		end if	
+	end if
+
+	CheckEqual(object.optionsSel, 1)
+	temp1 = checkResult
+	CheckEqual(object.state, MENUCONTROL_SONICOPTIONS)
+	temp1 |= checkResult
+	if temp1 == true	
+		DrawSpriteScreenXY(7, screen.xcenter, 60)
+		DrawSpriteScreenXY(7, screen.xcenter, 80)
+		DrawSpriteScreenXY(8, screen.xcenter, 60)
+		DrawSpriteScreenXY(8, screen.xcenter, 80)
+
+		if object.sonicOptionsSel == 1
+			DrawSpriteScreenXY(16, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(15, screen.xcenter, 60)
+		end if
+
+		if options.dropDash == true
+			DrawSpriteScreenXY(9, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 60)
+		end if	
+
+		if object.sonicOptionsSel == 2
+			DrawSpriteScreenXY(18, screen.xcenter, 80)
+		else
+			DrawSpriteScreenXY(17, screen.xcenter, 80)
+		end if
+
+		if options.instaShield == true
+			DrawSpriteScreenXY(9, screen.xcenter, 80)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 80)
+		end if
+	end if
+
+	CheckEqual(object.optionsSel, 2)
+	temp1 = checkResult
+	CheckEqual(object.state, MENUCONTROL_TAILSOPTIONS)
+	temp1 |= checkResult
+	if temp1 == true	
+		DrawSpriteScreenXY(7, screen.xcenter, 60)
+		DrawSpriteScreenXY(8, screen.xcenter, 60)
+
+		if object.tailsOptionsSel == 1
+			DrawSpriteScreenXY(20, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(19, screen.xcenter, 60)
+		end if
+
+		if options.flightCancel == true
+			DrawSpriteScreenXY(9, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 60)
+		end if					
+	end if	
+
+	CheckEqual(object.optionsSel, 3)
+	temp1 = checkResult
+	CheckEqual(object.state, MENUCONTROL_AMYOPTIONS)
+	temp1 |= checkResult
+	if temp1 == true	
+		DrawSpriteScreenXY(7, screen.xcenter, 60)
+		DrawSpriteScreenXY(8, screen.xcenter, 60)
+
+		if object.amyOptionsSel == 1
+			DrawSpriteScreenXY(22, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(21, screen.xcenter, 60)
+		end if
+
+		if options.amyDoubleJump == true
+			DrawSpriteScreenXY(9, screen.xcenter, 60)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 60)
+		end if					
+	end if		
+end event
+
+
+event ObjectStartup
+	SetMusicTrack("SpecialStage.ogg", TRACK_MENU, true)
+	LoadSpriteSheet("Title/Options.gif")
+
+	SpriteFrame(-30, -120, 510, 49, 1, 1) 		// Flag - #0
+
+	SpriteFrame(-50, -105, 110, 16, 1, 51) 		// "General" - #1
+	SpriteFrame(-30, -105, 70, 16, 116, 51) 	// "Sonic" - #2
+	if options.region == 0
+		SpriteFrame(-31, -105, 69, 16, 187, 51) 	// "Tails" - #3
+	else
+		SpriteFrame(-31, -105, 69, 16, 257, 51) 	// "Miles" - #3
+	end if
+	SpriteFrame(-19, -105, 47, 16, 327, 51) 		// "Amy" - #4
+
+	SpriteFrame(0, -105, 8, 16, 375, 51) 		// Big Arrow Right - #5
+	SpriteFrame(0, -105, 8, 16, 384, 51) 		// Big Arrow Left - #6
+
+	SpriteFrame(-120, 0, 240, 17, 1, 68) 		// Selection Background - #7
+	SpriteFrame(20, 0, 104, 17, 242, 68) 		// On/Off Selection Background - #8
+
+	SpriteFrame(58, 3, 17, 11, 393, 53) 		// "On" - #9
+	SpriteFrame(56, 3, 23, 11, 411, 53) 		// "Off" - #10
+
+	SpriteFrame(-110, 3, 67, 11, 1, 86) 		// "Spin Dash" (NON-SEL) - #11
+	SpriteFrame(-110, 3, 67, 11, 69, 86) 		// "Spin Dash" (SEL) - #12
+
+	SpriteFrame(-110, 3, 56, 11, 137, 86) 		// "Peelout" (NON-SEL) - #13
+	SpriteFrame(-110, 3, 56, 11, 194, 86) 		// "Peelout" (SEL) - #14
+
+	SpriteFrame(-110, 3, 69, 11, 1, 102) 		// "Drop Dash" (NON-SEL) - #15
+	SpriteFrame(-110, 3, 69, 11, 71, 102) 		// "Drop Dash" (SEL) - #16
+
+	SpriteFrame(-110, 3, 93, 11, 141, 102) 		// "Insta-Shield" (NON-SEL) - #17
+	SpriteFrame(-110, 3, 93, 11, 235, 102) 		// "Insta-Shield" (SEL) - #18
+
+	SpriteFrame(-110, 3, 99, 11, 1, 118) 		// "Flight Cancel" (NON-SEL) - #19
+	SpriteFrame(-110, 3, 99, 11, 101, 118) 		// "Flight Cancel" (SEL) - #20
+
+	SpriteFrame(-110, 3, 88, 11, 1, 134) 		// "Double Jump" (NON-SEL) - #21
+	SpriteFrame(-110, 3, 88, 11, 90, 134) 		// "Double Jump" (SEL) - #22
+
+	object.drawOrder = 1
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Display.gif")
+	SpriteFrame(-16, -16, 32, 32, 1, 143)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event
