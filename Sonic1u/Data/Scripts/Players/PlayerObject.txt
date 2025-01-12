@@ -10,11 +10,13 @@
 // ========================
 
 // SaveRAM stuff
-public alias saveRAM[300] : options.dropDash
-public alias saveRAM[301] : options.peelout
-public alias saveRAM[302] : options.instaShield
-public alias saveRAM[303] : options.flightCancel
-public alias saveRAM[304] : options.amyDoubleJump
+// Spin Dash is a GameConfig variable
+public alias saveRAM[300] : options.peelout
+public alias saveRAM[301] : options.airRecurl
+public alias saveRAM[302] : options.dropDash
+public alias saveRAM[303] : options.instaShield
+public alias saveRAM[304] : options.flightCancel
+public alias saveRAM[305] : options.amyDoubleJump
 
 public alias 0x100		: GROUP_PLAYERS
 public alias arrayPos6 	: currentPlayer
@@ -224,7 +226,7 @@ private alias object.value11 : player.scrollDelay			// A timer of how long the c
 private alias object.value12 : player.tailFrame				// One of Tails' tail values, not used by the player itself
 private alias object.value13 : player.tailAnim				// Also one of Tails' tail values
 private alias object.value14 : player.skidding
-// value15 is unused
+private alias object.value15 : player.dropDashTimer
 private alias object.value16 : player.isSidekick			// false if player 1, true if player 2
 private alias object.value17 : debugMode.currentSelection
 private alias object.value18 : player.sortedDrawOrder
@@ -287,7 +289,8 @@ private alias object.value0 : object.ledgePullFlag
 private alias 8 : TITLECARD_FADETOTITLE
 
 // Animation aliases
-public alias 28 : ANI_DROPDASH // Uses the unused "Launcher" section in the Animation Editor
+private alias 28 : ANI_DROP_DASH
+
 
 // ========================
 // Function Declarations
@@ -367,9 +370,9 @@ reserve function Player_TryTransform
 reserve function Player_State_BubbleBounce
 reserve function Player_Action_DblJumpSonic
 reserve function Player_HandleFlyCarry
-
 reserve function Player_Action_Peelout
 reserve function Player_State_Peelout
+reserve function Player_State_DropDashMT
 
 
 // ========================
@@ -1795,7 +1798,6 @@ public function Player_ProcessUpdate
 			// Reset player speed
 			currentPlayer = player.entityPos
 			CallFunction(Player_UpdatePhysicsState)
-			player.speedShoes = false
 
 			// SlowDownMusic is normally a function ID set by the stage's setup script, but if it's not set then don't call it
 			if SlowDownMusic != 0
@@ -2483,18 +2485,11 @@ public function Player_Action_Jump
 	end if
 	
 #platform: USE_ORIGINS
-	if options.dropDash == true
+	if stage.playerListPos == PLAYER_AMY_A
 		temp7 = 0
 	else
-		if stage.playerListPos == PLAYER_AMY_A
-			temp7 = 0 // amy needs it for hammer dash
-		else
-			temp7 = -1
-		end if
-	else
 		temp7 = -1
-	end if	
-	
+	end if
 	CallFunction(Player_SetDropDashCharge)
 #endplatform
 end function
@@ -2705,6 +2700,15 @@ public function Player_Action_DblJumpSonic
 
 	// Only act if the jump button is pressed
 	if player.jumpPress == true
+		// New drop dash
+		CheckEqual(options.dropDash, true)
+		temp0 = checkResult
+		CheckLower(player.shield, SHIELD_BUBBLE)
+		temp0 &= checkResult
+		if temp0 == true
+			player.state = Player_State_DropDashMT
+		end if
+
 #platform: USE_STANDALONE
 		// Same code as earlier, so the comments won't be repeated
 		CheckEqual(specialStage.emeralds, 0x7F)
@@ -3013,6 +3017,7 @@ public function Player_Action_DblJumpAmy
 		temp0 = player.animationSpeed
 		temp1 = player.frame
 		player.animation = ANI_HAMMER_JUMP
+		player.iypos -= player.jumpOffset
 		ProcessAnimation()
 		player.animationSpeed = temp0
 		player.frame = temp1
@@ -3035,6 +3040,7 @@ public function Player_Action_HammerDash
 	CallFunction(Player_SetHammerDashSpeed)
 #endplatform
 end function
+
 
 public function Player_State_HammerDash
 #platform: USE_ORIGINS
@@ -3067,12 +3073,13 @@ public function Player_State_HammerDash
 #endplatform
 end function
 
+
 public function Player_SetHammerDashSpeed
 #platform: USE_ORIGINS
-	CheckGreater(player.speedShoes, 0)
+	CheckGreater(player.speedShoesTimer, 0)
 	temp0 = checkResult
-	CheckEqual(Player_SuperState, 1)
-	temp0 |= checkResult		
+	CheckEqual(Player_SuperState, SUPERSTATE_SUPER)
+	temp0 |= checkResult
 	if temp0 == true
 		if player.direction == FACING_RIGHT
 			player.speed = 0x90000
@@ -3100,30 +3107,7 @@ public function Player_HandleDropDash
 		if temp7 >= 0
 			if temp7 == 0
 				if player.jumpPress == true
-					switch player.character
-					case PLAYER_SONIC_A
-						CheckEqual(player.character, PLAYER_SONIC_A) // A bit redundant here, but whatever
-						temp0 = checkResult
-						// You can't use the Drop Dash with elemental shields
-						CheckNotEqual(player.shield, SHIELD_BUBBLE)
-						temp0 &= checkResult
-						CheckNotEqual(player.shield, SHIELD_FIRE)
-						temp0 &= checkResult
-						CheckNotEqual(player.shield, SHIELD_LIGHTNING)
-						temp0 &= checkResult
-
-						if temp0 == true
-							temp7 = 1
-						else
-							temp7 = -1
-						end if
-						break
-
-					case PLAYER_AMY_A
-						// Amy defies all the odds and is able to Drop Dash with any shield
-						temp7 = 1
-						break
-					end switch
+					temp7 = 1
 				end if
 			else
 				if player.jumpHold == false
@@ -3133,7 +3117,7 @@ public function Player_HandleDropDash
 					temp7++
 					if temp7 == 20
 						PlaySfx(SfxName[DropDash], false)
-						player.animation = ANI_DROPDASH
+						player.animation = ANI_DROP_DASH
 						player.iypos -= player.jumpOffset
 						temp0 += player.jumpOffset
 					end if
@@ -3509,6 +3493,28 @@ public function Player_State_Air
 	if player.gravity == GRAVITY_AIR
 		CallFunction(Player_HandleAirMovement)
 
+		// Air-Recurl
+		if options.airRecurl == true
+			CheckEqual(player[currentPlayer].animation, ANI_WALKING)
+			temp0 = checkResult
+			CheckEqual(player[currentPlayer].animation, ANI_RUNNING)
+			temp0 |= checkResult
+			CheckEqual(player[currentPlayer].animation, ANI_PEELOUT)
+			temp0 |= checkResult
+			CheckEqual(player[currentPlayer].animation, ANI_BOUNCING)
+			temp0 |= checkResult
+			CheckEqual(player[currentPlayer].animation, ANI_GLIDING_DROP)
+			temp0 |= checkResult
+			if temp0 == true
+				if player.jumpPress == true
+					PlaySfx(SfxName[Rolling], false)
+					player.animation = ANI_JUMPING
+					player.jumpAbilityState = 2
+					player.state = Player_State_Air
+				end if
+			end if
+		end if
+
 		if player.yvel > 0x20000
 			if player.animation == ANI_FLAILING1
 				player.animation = ANI_WALKING
@@ -3516,28 +3522,6 @@ public function Player_State_Air
 			
 			if player.animation == ANI_FLAILING2
 				player.animation = ANI_WALKING
-			end if
-		end if
-
-		// Air-Recurl
-		CheckEqual(player[currentPlayer].animation, ANI_WALKING)
-		temp0 = checkResult
-		CheckEqual(player[currentPlayer].animation, ANI_RUNNING)
-		temp0 |= checkResult
-		CheckEqual(player[currentPlayer].animation, ANI_PEELOUT)
-		temp0 |= checkResult
-		CheckEqual(player[currentPlayer].animation, ANI_BOUNCING)
-		temp0 |= checkResult
-		CheckEqual(player[currentPlayer].animation, ANI_GLIDING_DROP)
-		temp0 |= checkResult
-		CheckEqual(player[currentPlayer].animation, ANI_HAMMER_DASH)
-		temp0 |= checkResult
-		if temp0 == true
-			if player.jumpPress == true
-				PlaySfx(SfxName[Rolling], false)
-				player.animation = ANI_JUMPING
-				player.jumpAbilityState = 2
-				player.state = Player_State_Air
 			end if
 		end if
 
@@ -3573,7 +3557,10 @@ public function Player_State_Air
 #platform: USE_ORIGINS
 		// Allow the player to use their jump ability if these conditions are met
 		if player.yvel >= player.jumpCap // Did the player actually jump? Rolling off of a ledge shouldn't count!
-			CallFunction(Player_HandleDropDash)
+			if stage.playerListPos == PLAYER_AMY_A
+				CallFunction(Player_HandleDropDash)
+			end if
+
 			if player.animation == ANI_JUMPING
 				if player.jumpAbilityState == 1
 					CallFunction(player.jumpAbility)
@@ -3609,26 +3596,10 @@ public function Player_State_Air
 		temp0 &= checkResult
 		
 		if temp0 == true
-			switch player.character
-			case PLAYER_SONIC_A
-				CallFunction(Player_Action_Spindash) // Good ol' Sonic Team programming
-				break
-			case PLAYER_AMY_A
-				CallFunction(Player_Action_HammerDash)
-				break
-			end switch
+			CallFunction(Player_Action_HammerDash)
+			
 			if Player_superState == SUPERSTATE_SUPER
 				screen.shakeY = 6
-			end if
-
-			if stage.playerListPos == PLAYER_SONIC_A
-				// Create dust puff object
-				CreateTempObject(TypeName[Drop Dash Dust], player.entityPos, player.xpos, player.ypos)
-				object[tempObjectPos].iypos = player.collisionBottom
-				object[tempObjectPos].ypos += player.ypos
-				object[tempObjectPos].frame = 4
-				object[tempObjectPos].drawOrder = 4
-				object[tempObjectPos].direction = player.direction
 			end if
 		else
 			player.state = Player_State_Ground
@@ -3708,7 +3679,10 @@ public function Player_State_RollJump
 
 #platform: USE_ORIGINS
 		if player.yvel >= player.jumpCap
-			CallFunction(Player_HandleDropDash)
+			if stage.playerListPos == PLAYER_AMY_A
+				CallFunction(Player_HandleDropDash)
+			end if
+
 			if player.animation == ANI_JUMPING
 				if player.jumpAbilityState == 1
 					CallFunction(player.jumpAbility)
@@ -3735,15 +3709,8 @@ public function Player_State_RollJump
 		temp0 &= checkResult
 		
 		if temp0 == true
-			switch player.character
-			case PLAYER_SONIC_A
-				CallFunction(Player_Action_Spindash) // Good ol' Sonic Team programming
-				break
+			CallFunction(Player_Action_HammerDash)
 
-			case PLAYER_AMY_A
-				CallFunction(Player_Action_HammerDash)
-				break
-			end switch
 			if Player_superState == SUPERSTATE_SUPER
 				screen.shakeY = 6
 			end if
@@ -3798,89 +3765,6 @@ public function Player_State_LookUp
 	end if
 end function
 
-// A true classic, this just starts it tho
-public function Player_Action_Peelout
-	player.state = Player_State_Peelout
-	player.abilityTimer = 0
-	PlaySfx(SfxName[Charge], false) 
-end function
-
-public function Player_State_Peelout
-	// Moves the camera
-	Screen.CameraStyle = CAMERASTYLE_FOLLOW
-
-	// Cancels the Peel Out, keeps the camera
-	if Player.Gravity == GRAVITY_AIR
-
-#platform: Use_Origins
-		Player.State = Player_State_Air_NoDropDash
-#endplatform
-
-#platform: Use_Standalone
-		Player.State = Player_State_Air
-#endplatform
-
-		Player.Speed = 0
-		Screen.CameraStyle = CAMERASTYLE_FOLLOW
-	end if
-	
-	// Charge
-	if Player.GravityStrength == 0x1000
-		if Player.AbilityTimer < 0x60000
-			Player.AbilityTimer += 0x6000
-		end if
-	else
-		if Player.AbilityTimer < 0xC0000
-			Player.AbilityTimer += 0x6000
-		end if
-	end if
-	
-	// Speed building, from walking to running then peelout
-	if Player.AbilityTimer < 0x5F5C2
-		Player.Animation = ANI_WALKING
-		temp0   = Player.AbilityTimer
-		temp0 >>= 16
-		temp0  *= 80
-		temp0  /= 6
-		temp0  += 20
-	else
-		temp0   = Player.AbilityTimer
-		temp0 >>= 16
-		temp0  *= 80
-		temp0  /= 6
-		if Player.AbilityTimer > 0x9FFFF
-			Player.Animation = ANI_PEELOUT
-		else
-			Player.Animation = ANI_RUNNING
-		end if
-	end if
-	
-	// Release
-	if Player.Up == false
-		Screen.CameraStyle = CAMERASTYLE_FOLLOW
-
-		Player.State = Player_State_Ground
-		// Cancels the peel out if you didn't charged it enough
-		if Player.AbilityTimer < 0x5F5C2
-			Player.Speed = 0
-		else
-			Player.Speed = Player.AbilityTimer
-			if Player.Direction == FACING_LEFT
-				FlipSign(Player.Speed)
-
-				if player.entityPos == SLOT_PLAYER1
-					player.scrollDelay = 15
-					camera[0].style = CAMERASTYLE_HLOCKED
-				end if
-			end if
-
-			PlaySfx(SfxName[Release], false) 
-		end if
-		CallFunction(Player_HandleOnGround)
-
-	end if
-	Player.AnimationSpeed = temp0
-end function
 
 // Also handles moving the camera down
 public function Player_State_Crouch
@@ -4326,10 +4210,10 @@ public function Player_State_Fly
 				end if
 			end if
 		end if
+
 		if options.flightCancel == true
 			if player.down == true
 				if player.jumpPress == true
-					PlaySfx(SfxName[Rolling], false)
 					StopSfx(SfxName[Flying])
 					player.animation = ANI_JUMPING
 					player.jumpAbilityState = 2
@@ -5768,6 +5652,164 @@ public function Player_State_ContinueRun
 end function
 
 
+// A true classic, this just starts it tho
+public function Player_Action_Peelout
+	player.state = Player_State_Peelout
+	player.abilityTimer = 0
+	PlaySfx(SfxName[Charge], false) 
+end function
+
+
+public function Player_State_Peelout
+	// Moves the camera
+	Screen.CameraStyle = CAMERASTYLE_FOLLOW
+
+	// Cancels the Peel Out, keeps the camera
+	if Player.Gravity == GRAVITY_AIR
+
+#platform: Use_Origins
+		Player.State = Player_State_Air_NoDropDash
+#endplatform
+
+#platform: Use_Standalone
+		Player.State = Player_State_Air
+#endplatform
+
+		Player.Speed = 0
+		Screen.CameraStyle = CAMERASTYLE_FOLLOW
+	end if
+	
+	// Charge
+	if Player.GravityStrength == 0x1000
+		if Player.AbilityTimer < 0x60000
+			Player.AbilityTimer += 0x6000
+		end if
+	else
+		if Player.AbilityTimer < 0xC0000
+			Player.AbilityTimer += 0x6000
+		end if
+	end if
+	
+	// Speed building, from walking to running then peelout
+	if Player.AbilityTimer < 0x5F5C2
+		Player.Animation = ANI_WALKING
+		temp0   = Player.AbilityTimer
+		temp0 >>= 16
+		temp0  *= 80
+		temp0  /= 6
+		temp0  += 20
+	else
+		temp0   = Player.AbilityTimer
+		temp0 >>= 16
+		temp0  *= 80
+		temp0  /= 6
+		if Player.AbilityTimer > 0x9FFFF
+			Player.Animation = ANI_PEELOUT
+		else
+			Player.Animation = ANI_RUNNING
+		end if
+	end if
+	
+	// Release
+	if Player.Up == false
+		Screen.CameraStyle = CAMERASTYLE_FOLLOW
+
+		Player.State = Player_State_Ground
+		// Cancels the peel out if you didn't charged it enough
+		if Player.AbilityTimer < 0x5F5C2
+			Player.Speed = 0
+		else
+			Player.Speed = Player.AbilityTimer
+			if Player.Direction == FACING_LEFT
+				FlipSign(Player.Speed)
+
+				if player.entityPos == SLOT_PLAYER1
+					player.scrollDelay = 15
+					camera[0].style = CAMERASTYLE_HLOCKED
+				end if
+			end if
+
+			PlaySfx(SfxName[Release], false) 
+		end if
+		CallFunction(Player_HandleOnGround)
+
+	end if
+	Player.AnimationSpeed = temp0
+end function
+
+
+// Drop Dash code remade for the mod
+public function Player_State_DropDashMT
+	if player.gravity == GRAVITY_AIR
+		CallFunction(Player_HandleAirFriction)
+		CallFunction(Player_HandleAirMovement)
+
+		if player.jumpHold == true
+			player.dropDashTimer++
+			if player.dropDashTimer == 22
+				PlaySfx(SfxName[DropDash], false)
+				player.animation = ANI_DROP_DASH
+				player.iypos -= player.jumpOffset
+			end if
+		else
+			player.dropDashTimer = 0
+			StopSfx(SfxName[DropDash])
+			player.animation = ANI_JUMPING
+			player.iypos -= player.jumpOffset
+			player.state = Player_State_Air
+		end if
+	else
+		if player.dropDashTimer > 22
+			// Release the drop dash!
+			player.dropDashTimer = 0
+			player.animation = ANI_JUMPING
+			player.state = Player_State_Roll
+			player.iypos -= player.jumpOffset
+
+			currentPlayer = player.entityPos
+			if player.entityPos == camera[currentPlayer].target
+				player.scrollDelay = 15
+				camera[currentPlayer].style = CAMERASTYLE_HLOCKED
+			end if
+
+			temp0 = player.abilityTimer
+			temp0 >>= 17
+			temp0 <<= 16
+			if Player_superState == SUPERSTATE_SUPER
+				screen.shakeY = 6
+				if player.speedShoesTimer > 1
+					temp0 += 0xA5000
+				else
+					temp0 += 0xC0000
+				end if
+			else
+				temp0 += 0x90000
+			end if
+
+			if player.direction == FACING_RIGHT
+				player.speed = temp0
+			else
+				player.speed = temp0
+				FlipSign(player.speed)
+			end if
+
+			// Create the dust puff object for the Drop Dash's dust
+			CreateTempObject(TypeName[Drop Dash Dust], 0, player.xpos, player.ypos)
+			object[tempObjectPos].iypos = player.collisionBottom
+			object[tempObjectPos].ypos += player.ypos
+			object[tempObjectPos].drawOrder = 4
+			object[tempObjectPos].direction = player.direction
+
+			StopSfx(SfxName[DropDash])
+			PlaySfx(SfxName[Release], false)
+			CallFunction(Player_HandleOnGround)
+		else
+			player.state = Player_State_Ground
+		end if
+	end if
+end function
+
+
 // ========================
 // Events
 // ========================
@@ -6088,6 +6130,11 @@ event ObjectStartup
 #endplatform
 			player[SLOT_PLAYER1].jumpOffset = -5 // Offset of 5 pixels when rolling
 			player[SLOT_PLAYER1].jumpAbility = Player_Action_DblJumpSonic
+			player.dropDashTimer = 0
+
+			if options.peelout == false
+				ANI_PEELOUT = ANI_RUNNING
+			end if
 			break
 
 		case PLAYER_TAILS_A
@@ -6137,15 +6184,21 @@ event ObjectStartup
 				stage.player2Enabled = false
 			end if
 
-			ANI_PEELOUT = ANI_RUNNING
+			if options.peelout == false
+				ANI_PEELOUT = ANI_RUNNING
+			end if
 			break
+
 #platform: USE_ORIGINS
 		case PLAYER_AMY_A
 			LoadAnimation("Amy.ani")
 			CallFunction(Player_HandleSuperPalette_Amy)
-			player[SLOT_PLAYER1].character 	= PLAYER_AMY
-			player[SLOT_PLAYER1].jumpOffset 	= -4
-			player[SLOT_PLAYER1].jumpAbility 	= Player_Action_DblJumpAmy
+			player[SLOT_PLAYER1].character = PLAYER_AMY
+			player[SLOT_PLAYER1].jumpOffset = -4
+			player[SLOT_PLAYER1].jumpAbility = Player_Action_DblJumpAmy
+			if options.peelout == false
+				ANI_PEELOUT = ANI_RUNNING
+			end if
 			break
 #endplatform
 		end switch

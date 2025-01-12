@@ -1,5 +1,5 @@
 // ----------------------------------
-// RSDK Project: Sonic 1
+// RSDK Project: Sonic 2
 // Script Description: Options Menu Object
 // Script Author: ProdNW
 // ----------------------------------
@@ -9,12 +9,13 @@
 // ========================
 
 // SaveRAM stuff
-// Spin Dash is a GameConfig variable
 public alias saveRAM[300] : options.peelout
 public alias saveRAM[301] : options.airRecurl
 public alias saveRAM[302] : options.dropDash
 public alias saveRAM[303] : options.instaShield
+// Flight is a GameConfig variable
 public alias saveRAM[304] : options.flightCancel
+// Super Tails is a GameConfig variable
 public alias saveRAM[305] : options.amyDoubleJump
 
 private alias object.value0 : object.timer
@@ -36,7 +37,6 @@ private alias 7 : MENUCONTROL_BACKTOTITLE
 
 // Tracks
 private alias 1 : TRACK_MENU
-
 
 // ========================
 // Events
@@ -100,7 +100,7 @@ event ObjectUpdate
 				object.state = MENUCONTROL_GENERALOPTIONS
 				object.generalSel = 1
 				break
-
+				
 			case 1
 				object.state = MENUCONTROL_SONICOPTIONS
 				object.sonicOptionsSel = 1
@@ -137,28 +137,16 @@ event ObjectUpdate
 		end if
 
 		// Selection Loops
-		if object.generalSel > 3
+		if object.generalSel > 2
 			object.generalSel = 1
 		end if
 
 		if object.generalSel < 1
-			object.generalSel = 3
+			object.generalSel = 2
 		end if
 
 		switch object.generalSel
-		case 1 // Spin Dash
-			if keyPress[0].left == true
-				options.spindash = false
-				PlaySfx(SfxName[Menu Move], false)
-			end if
-
-			if keyPress[0].right == true
-				options.spindash = true
-				PlaySfx(SfxName[Menu Move], false)
-			end if		
-			break
-
-		case 2 // Peelout
+		case 1 // Peelout
 			if keyPress[0].left == true
 				options.peelout = false
 				PlaySfx(SfxName[Menu Move], false)
@@ -170,7 +158,7 @@ event ObjectUpdate
 			end if
 			break
 
-		case 3 // Air-Recurl
+		case 2 // Air-Recurl
 			if keyPress[0].left == true
 				options.airRecurl = false
 				PlaySfx(SfxName[Menu Move], false)
@@ -252,8 +240,8 @@ event ObjectUpdate
 		end if
 
 		// Selection Loops
-		if object.tailsOptionsSel > 1
-			object.tailsOptionsSel = 1
+		if object.tailsOptionsSel > 3
+			object.tailsOptionsSel = 3
 		end if
 
 		if object.tailsOptionsSel < 1
@@ -261,7 +249,19 @@ event ObjectUpdate
 		end if
 
 		switch object.tailsOptionsSel
-		case 1 // Flight Cancel
+		case 1 // Flight
+			if keyPress[0].left == true
+				options.tailsFlight = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.tailsFlight = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+			break
+
+		case 2 // Flight Cancel
 			if keyPress[0].left == true
 				options.flightCancel = false
 				PlaySfx(SfxName[Menu Move], false)
@@ -270,8 +270,20 @@ event ObjectUpdate
 			if keyPress[0].right == true
 				options.flightCancel = true
 				PlaySfx(SfxName[Menu Move], false)
-			end if		
-			break		
+			end if
+			break
+
+		case 3 // Super Tails
+			if keyPress[0].left == true
+				options.superTails = false
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+
+			if keyPress[0].right == true
+				options.superTails = true
+				PlaySfx(SfxName[Menu Move], false)
+			end if
+			break
 		end switch
 		break
 
@@ -381,46 +393,31 @@ event ObjectDraw
 		DrawSpriteScreenXY(8, screen.xcenter, 60)
 		DrawSpriteScreenXY(7, screen.xcenter, 80)
 		DrawSpriteScreenXY(8, screen.xcenter, 80)
-		DrawSpriteScreenXY(7, screen.xcenter, 100)
-		DrawSpriteScreenXY(8, screen.xcenter, 100)
 
-		// Spin Dash
+		// Peelout
 		if object.generalSel == 1
 			DrawSpriteScreenXY(12, screen.xcenter, 60)
 		else
 			DrawSpriteScreenXY(11, screen.xcenter, 60)
 		end if
 
-		if options.spindash == true
+		if options.peelout == true
 			DrawSpriteScreenXY(9, screen.xcenter, 60)
 		else
 			DrawSpriteScreenXY(10, screen.xcenter, 60)
 		end if
 
-		// Peelout
+		// Air-Recurl
 		if object.generalSel == 2
 			DrawSpriteScreenXY(14, screen.xcenter, 80)
 		else
 			DrawSpriteScreenXY(13, screen.xcenter, 80)
 		end if
 
-		if options.peelout == true
+		if options.airRecurl == true
 			DrawSpriteScreenXY(9, screen.xcenter, 80)
 		else
 			DrawSpriteScreenXY(10, screen.xcenter, 80)
-		end if
-
-		// Air-Recurl
-		if object.generalSel == 3
-			DrawSpriteScreenXY(24, screen.xcenter, 100)
-		else
-			DrawSpriteScreenXY(23, screen.xcenter, 100)
-		end if
-
-		if options.airRecurl == true
-			DrawSpriteScreenXY(9, screen.xcenter, 100)
-		else
-			DrawSpriteScreenXY(10, screen.xcenter, 100)
 		end if
 	end if
 
@@ -445,7 +442,7 @@ event ObjectDraw
 			DrawSpriteScreenXY(9, screen.xcenter, 60)
 		else
 			DrawSpriteScreenXY(10, screen.xcenter, 60)
-		end if
+		end if	
 
 		// Insta-Shield
 		if object.sonicOptionsSel == 2
@@ -468,20 +465,50 @@ event ObjectDraw
 	if temp1 == true	
 		DrawSpriteScreenXY(7, screen.xcenter, 60)
 		DrawSpriteScreenXY(8, screen.xcenter, 60)
+		DrawSpriteScreenXY(7, screen.xcenter, 80)
+		DrawSpriteScreenXY(8, screen.xcenter, 80)
+		DrawSpriteScreenXY(7, screen.xcenter, 100)
+		DrawSpriteScreenXY(8, screen.xcenter, 100)
 
-		// Flight Cancel
+		// Flight
 		if object.tailsOptionsSel == 1
 			DrawSpriteScreenXY(20, screen.xcenter, 60)
 		else
 			DrawSpriteScreenXY(19, screen.xcenter, 60)
 		end if
 
-		if options.flightCancel == true
+		if options.tailsFlight == true
 			DrawSpriteScreenXY(9, screen.xcenter, 60)
 		else
 			DrawSpriteScreenXY(10, screen.xcenter, 60)
-		end if					
-	end if	
+		end if
+
+		// Flight Cancel
+		if object.tailsOptionsSel == 2
+			DrawSpriteScreenXY(22, screen.xcenter, 80)
+		else
+			DrawSpriteScreenXY(21, screen.xcenter, 80)
+		end if
+
+		if options.flightCancel == true
+			DrawSpriteScreenXY(9, screen.xcenter, 80)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 80)
+		end if
+
+		// Super Tails
+		if object.tailsOptionsSel == 3
+			DrawSpriteScreenXY(24, screen.xcenter, 100)
+		else
+			DrawSpriteScreenXY(23, screen.xcenter, 100)
+		end if
+
+		if options.superTails == true
+			DrawSpriteScreenXY(9, screen.xcenter, 100)
+		else
+			DrawSpriteScreenXY(10, screen.xcenter, 100)
+		end if
+	end if
 
 	CheckEqual(object.optionsSel, 3)
 	temp1 = checkResult
@@ -493,9 +520,9 @@ event ObjectDraw
 
 		// Double Jump
 		if object.amyOptionsSel == 1
-			DrawSpriteScreenXY(22, screen.xcenter, 60)
+			DrawSpriteScreenXY(26, screen.xcenter, 60)
 		else
-			DrawSpriteScreenXY(21, screen.xcenter, 60)
+			DrawSpriteScreenXY(25, screen.xcenter, 60)
 		end if
 
 		if options.amyDoubleJump == true
@@ -508,7 +535,7 @@ end event
 
 
 event ObjectStartup
-	SetMusicTrack("SpecialStage.ogg", TRACK_MENU, true)
+	SetMusicTrack("Options.ogg", TRACK_MENU, true)
 	LoadSpriteSheet("Title/Options.gif")
 
 	SpriteFrame(-30, -120, 510, 49, 1, 1) 		// Flag - #0
@@ -531,11 +558,11 @@ event ObjectStartup
 	SpriteFrame(58, 3, 17, 11, 393, 53) 		// "On" - #9
 	SpriteFrame(56, 3, 23, 11, 411, 53) 		// "Off" - #10
 
-	SpriteFrame(-110, 3, 67, 11, 1, 86) 		// "Spin Dash" (NON-SEL) - #11
-	SpriteFrame(-110, 3, 67, 11, 69, 86) 		// "Spin Dash" (SEL) - #12
+	SpriteFrame(-110, 3, 56, 11, 137, 86) 		// "Peelout" (NON-SEL) - #11
+	SpriteFrame(-110, 3, 56, 11, 194, 86) 		// "Peelout" (SEL) - #12
 
-	SpriteFrame(-110, 3, 56, 11, 137, 86) 		// "Peelout" (NON-SEL) - #13
-	SpriteFrame(-110, 3, 56, 11, 194, 86) 		// "Peelout" (SEL) - #14
+	SpriteFrame(-110, 3, 79, 11, 251, 86) 		// Air-Recurl (NON-SEL) - #13
+	SpriteFrame(-110, 3, 79, 11, 331, 86) 		// Air-Recurl (SEL) - #14
 
 	SpriteFrame(-110, 3, 69, 11, 1, 102) 		// "Drop Dash" (NON-SEL) - #15
 	SpriteFrame(-110, 3, 69, 11, 71, 102) 		// "Drop Dash" (SEL) - #16
@@ -543,14 +570,17 @@ event ObjectStartup
 	SpriteFrame(-110, 3, 93, 11, 141, 102) 		// "Insta-Shield" (NON-SEL) - #17
 	SpriteFrame(-110, 3, 93, 11, 235, 102) 		// "Insta-Shield" (SEL) - #18
 
-	SpriteFrame(-110, 3, 99, 11, 1, 118) 		// "Flight Cancel" (NON-SEL) - #19
-	SpriteFrame(-110, 3, 99, 11, 101, 118) 		// "Flight Cancel" (SEL) - #20
+	SpriteFrame(-110, 3, 43, 11, 1, 118) 		// "Flight" (NON-SEL) - #19
+	SpriteFrame(-110, 3, 43, 11, 101, 118) 		// "Flight" (SEL) - #20
 
-	SpriteFrame(-110, 3, 88, 11, 1, 134) 		// "Double Jump" (NON-SEL) - #21
-	SpriteFrame(-110, 3, 88, 11, 90, 134) 		// "Double Jump" (SEL) - #22
+	SpriteFrame(-110, 3, 99, 11, 1, 118) 		// "Flight Cancel" (NON-SEL) - #21
+	SpriteFrame(-110, 3, 99, 11, 101, 118) 		// "Flight Cancel" (SEL) - #22
 
-	SpriteFrame(-110, 3, 79, 11, 251, 86) 		// Air-Recurl (NON-SEL) - #23
-	SpriteFrame(-110, 3, 79, 11, 331, 86) 		// Air-Recurl (SEL) - #24
+	SpriteFrame(-110, 3, 81, 11, 201, 118) 		// "Super Tails" (NON-SEL) - #23
+	SpriteFrame(-110, 3, 81, 11, 283, 118) 		// "Super Tails" (SEL) - #24
+
+	SpriteFrame(-110, 3, 88, 11, 1, 134) 		// "Double Jump" (NON-SEL) - #25
+	SpriteFrame(-110, 3, 88, 11, 90, 134) 		// "Double Jump" (SEL) - #26
 
 	object.drawOrder = 1
 end event

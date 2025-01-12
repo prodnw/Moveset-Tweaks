@@ -1,0 +1,70 @@
+// ----------------------------------
+// RSDK Project: Sonic 2
+// Script Description: Drop Dash Dust Object
+// Script Author: ProdNW
+// ----------------------------------
+
+// ========================
+// Aliases
+// ========================
+
+private alias object.value0 : object.timer
+
+
+// ========================
+// Events
+// ========================
+
+event ObjectUpdate
+	// Animate the dust object
+	object.timer++
+	if object.timer > 2
+		object.timer = 0
+		
+		object.frame++
+		if object.frame > 9
+			object.type = TypeName[Blank Object]
+			object.frame = 10
+		end if
+	end if
+end event
+
+
+event ObjectDraw
+	DrawSpriteFX(object.frame, FX_FLIP, object.xpos, object.ypos)
+end event
+
+
+event ObjectStartup
+	LoadSpriteSheet("Global/DustDD.gif")
+
+	// Drop Dash dust frames
+	SpriteFrame(-17, -15, 17, 16, 1, 0)  	// Frame 0
+	SpriteFrame(-27, -21, 28, 22, 19, 0) 	// Frame 1
+	SpriteFrame(-30, -25, 32, 26, 48, 0) 	// Frame 2
+	SpriteFrame(-30, -29, 32, 30, 81, 0) 	// Frame 3
+	SpriteFrame(-26, -35, 24, 33, 114, 0) 	// Frame 4
+	SpriteFrame(-27, -36, 25, 32, 139, 0) 	// Frame 5
+	SpriteFrame(-27, -38, 25, 27, 165, 0)	 // Frame 6
+	SpriteFrame(-27, -39, 26, 25, 191, 0)	 // Frame 7
+	SpriteFrame(-26, -39, 23, 15, 218, 0)	 // Frame 8
+	SpriteFrame(-26, -39, 22, 10, 242, 0)	 // Frame 9
+	SpriteFrame(0, 0, 0, 0, 0, 0) 			// Blank Frame
+end event
+
+
+// ========================
+// Editor Events
+// ========================
+
+event RSDKDraw
+	DrawSprite(0)
+end event
+
+
+event RSDKLoad
+	LoadSpriteSheet("Global/Items2.gif")
+	SpriteFrame(-16, -16, 32, 32, 149, 66)
+	
+	SetVariableAlias(ALIAS_VAR_PROPVAL, "unused")
+end event
