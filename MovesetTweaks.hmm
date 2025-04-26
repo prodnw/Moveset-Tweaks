@@ -12,3 +12,11 @@ Patch "Moveset Tweaks" by "SuperSonic16"
     WriteProtected<byte>(Player_State_HammerDash + 0xF0, 0xEB);
     WriteProtected<byte>(Player_State_HammerDash + 0xFD, 0xEB);
 }
+
+Code "Enable Super Peel Out" in "Gameplay/Sonic 3 & Knuckles/Abilities/Sonic" by "MegAmi" does
+{
+    if (RSDK.GetRSDKGlobalsPtr() == 0)
+        return;
+
+    *(int*)(RSDK.GetRSDKGlobalsPtr() + 0xC2CB4) |= (int)RSDK.S3KMedalMod.SuperPeelOut;
+}
